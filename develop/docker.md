@@ -86,9 +86,9 @@ docker pull docker.dongle.com:5000/centos:v1  # 拉取时也会自动根据前�
 [root@localhost] htpasswd -Bbn admin admin > /data/docker/auth/htpasswd
 ```
 3. 启动仓库，携带认证命令
-* REGISTRY_AUTH=htpasswd # 以 htpasswd 的方式认证
-* REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm # 注册认证
-* REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd # 认证的用户密码
+* `REGISTRY_AUTH=htpasswd` # 以 htpasswd 的方式认证
+* `REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm` # 注册认证
+* `REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd` # 认证的用户密码
 ```bash
 [root@localhost] docker run -p 5000:5000 \
 --restart=always \
