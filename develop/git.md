@@ -87,19 +87,24 @@ host gitee.com  # 别名,最好别改
   * 以上配置方式，使用于 `ssh:` 协议连接
   * 该方式**同样适用于单用户单机单公钥**，但是**不推荐**
 
-# 项目管理
-## 克隆管理
-### 浅克隆
+# 克隆管理
+## 浅克隆
 * 限定深度：`git clone --depth 1`
 * 全局限定深度：`git config --global clone.depth 1`
 ```shell
 git clone --depth 1 https://github.com/xxx/xxx.git
 ```
-### 导出指定文件
+## 导出指定文件
 ```shell
 git archive --format=zip --output=xxx.zip HEAD:xxx
 ```
-### 检出指定文件
+
+## 管理指定目录或文件
+* 完整管理
+* `Sparse Checkout`模式：可拉取任意目录
+* `Submodule`模式: 只适用于添加新目录到主项目，不适合拉取已有项目
+
+### `Sparse Checkout`模式(检出指定文件或目录)
 ```shell
 # 创建仓库本地目录，并初始化
 git init
@@ -118,8 +123,22 @@ echo "path/to/directory/" >> .git/info/sparse-checkout
 git remote add origin <repository_url> # 关联远程地址
 git pull origin master
 ```
+### `Submodule`模式
+允许将一个仓库作为另一个仓库的子项目。
+1. 将子项目仓库添加到主项目
+```shell
+git submodule add [子项目仓库地址] [子项目路径]
+```
+2. 子模块命令初始化子项目
+```shell
+git submodule init
+```
+3. 使用子模块命令更新子项目代码
+```shell
+git submodule update
+```
 
-### 关联多个远程地址
+## 关联多个远程地址
 ```shell
 git remote add <remote_name> <remote_url> # 区分好remote_name即可
 git remote -v # 查看远程地址
@@ -130,8 +149,66 @@ git pull <remote_name> <branch_name>
 git push <remote_name> <branch_name>
 ```
 
-## 文件管理
-### 差异对比
+## SVN同步
+* Git同步SVN项目初始
+```shell
+## 首先使用git svn clone 拉取svn项目 （）
+git svn clone svn://host/path/fftmob --no-minimize-url --no-metadata -r 25923:HEAD  # 从哪个版本开始到哪个哪个版本（不过经过测试，后面的版本必须时最新版本，否则不会拉取大妈）
+## 进入项目目录中
+cd fftmob
+## 关联git项目
+git remote add origin git@gitee.com:url/test.git
+## 关联远端分支（这里使用主支）
+git branch -u origin/master
+## 更新本地代码
+git pull --allow-unrelated-histories # 由于本地和远端属于不同的两个分支，所以需要使用--allow-unrelated-histories强行合并
+## 提交svn代码到git
+git push origin --all
+```
+* SVN同步到Git
+```shell
+## 拉取svn最新代码
+git svn fetch -rHEAD  # 结果会显示版本序列号及git本地分支
+
+## 将git-svn代码合并到master
+git merge remotes/git-svn
+
+## 更新代码到git仓库
+git push
+```
+* Git关联SVN
+```shell
+## 在git项目目录中编辑.git/config文件
+[svn-remote "svn"]
+        noMetadata = 1
+        url = svn://test # svn项目地址
+        fetch = :refs/remotes/git-svn  # svn项目关联远程分支（git-svn默认时svn master）
+        
+## 后续执行以下语句保持与svn项目关联
+git svn fetch -r HEAD
+```
+* Git同步到SVN
+```shell
+##获取svn更新
+git svn fetch # 得到svn版本号及svn分支的git版本号
+
+## 添加待提交内容
+git add .
+git commit -m "" # git需要先进入提交状态，才可以执行下方语句，向svn同步
+
+## 合并代码
+git svn rebase # 版本差距较大时代码内容不同才会提示冲突，需要解决后才能提交，或者跳过
+
+##提交git代码到svn
+git svn dcommit 
+## 上面存在异常，待处理
+```
+
+## 忽略文件
+* 单项目配置：根项目下创建`.gitignore`文件，并添加需要忽略的文件或目录
+* 全局配置：`~/.gitignore_global`文件，并添加需要忽略的文件或目录
+
+## 差异对比
 * `git diff`
 * 文件差异：
   * 工作区与暂存区(默认)
@@ -148,7 +225,15 @@ git diff V1 V2 # 不同版本之间差异
 git diff a.txt b.txt # 两个文件之间差异(可以是非git文件)
 ``` 
 
-## 项目回滚
+## 撤销&回滚
+### 撤销添加
+处理在`commit`之前的`add`失误操作
+```shell
+git add HEAD # 撤销上一次add提交的所有文件
+git add HEAD filepath # 撤销上一次add提交的某文件
+```
+
+### 项目回滚
 * `git reset`: 回滚到指定版本,**适用于本地提交未推送时**
 ```shell
 git log # 查看提交记录
